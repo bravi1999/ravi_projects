@@ -1,12 +1,20 @@
 import { Component } from "react";
+import withNavigate from "../WithNavigate";
 import Cookies from 'js-cookie'
 import './index.css'
+import { Navigate } from "react-router-dom";
 
 class Login extends Component{
-    state={username:'', password: ''}
+    state={username:'', password: '', showErrMsg: '', loginFailed: false}
 
     onSubmitSuccess = (jwtToken) => {
-        Cookies.set(jwtToken, 'jwt_token', {expires: 30});
+        Cookies.set('jwt_token',jwtToken,  {expires: 30});
+        this.props.navigate('/', { replace: true });
+        this.setState({loginFailed: false, showErrMsg: ''})
+    }
+
+    onSubmitFailure = (data) => {
+        this.setState({showErrMsg:'Login Failed', loginFailed: true})
     }
 
     submitLoginForm = async (event) => {
@@ -21,9 +29,9 @@ class Login extends Component{
         const response = await fetch(url, options);
         const data = await response.json()
         if (response.ok === true){
-            this.onSubmitSuccess(data.jwt_token)
-        }else{
-            
+            this.onSubmitSuccess(data.jwt_token);
+        }else if (response.status == 400){
+            this.onSubmitFailure(data)
         }
         
         
@@ -39,6 +47,10 @@ class Login extends Component{
 
     render(){
         const {username, password} = this.state
+        const jwtToken = Cookies.get('jwt_token')
+        if (jwtToken !== undefined){
+            return <Navigate to = "/" />
+        }
         return(
             <div className="login-container">
                 <div className="login-card">
@@ -56,4 +68,4 @@ class Login extends Component{
     }
 }
 
-export default Login
+export default withNavigate(Login);
